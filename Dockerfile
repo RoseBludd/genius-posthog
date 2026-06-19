@@ -8,9 +8,7 @@ RUN apt-get update \
 
 COPY logo-icon.png /opt/genius/logo-icon.png
 COPY patch_branding.py /opt/genius/patch_branding.py
-COPY genius_landing.py /opt/genius/genius_landing.py
 COPY genius-entrypoint.sh /opt/genius/genius-entrypoint.sh
-COPY landing/ /opt/genius/landing/
 
 RUN chmod +x /opt/genius/genius-entrypoint.sh \
   && python3 /opt/genius/patch_branding.py
