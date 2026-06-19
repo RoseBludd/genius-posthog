@@ -13,13 +13,18 @@ sed \
   -e "s/__POSTHOG_PORT__/${POSTHOG_PORT}/g" \
   /opt/genius/nginx.conf.template > /etc/nginx/nginx.conf
 
+if ! nginx -t 2>/tmp/nginx-test.log; then
+  cat /tmp/nginx-test.log >&2
+  exit 1
+fi
+
 export PORT="${POSTHOG_PORT}"
 /compose/start "$@" &
 POSTHOG_PID=$!
 
 ready=0
 i=0
-while [ "$i" -lt 90 ]; do
+while [ "$i" -lt 120 ]; do
   if curl -sf "http://127.0.0.1:${POSTHOG_PORT}/login" >/dev/null 2>&1; then
     ready=1
     break
