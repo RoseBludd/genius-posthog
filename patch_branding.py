@@ -6,8 +6,9 @@ import json
 import re
 from pathlib import Path
 
-CODE_ROOT = Path("/code")
 ICON = Path("/opt/genius/logo-icon.png")
+LANDING_MODULE = Path("/opt/genius/genius_landing.py")
+CODE_ROOT = Path("/code")
 GENIUS = "genius."
 GENIUS_LOGO = "/static/icons/genius-logo.png"
 
@@ -135,6 +136,36 @@ def iter_patch_files() -> list[Path]:
     return files
 
 
+def patch_landing_routes() -> None:
+    if not LANDING_MODULE.is_file():
+        return
+
+    dest = CODE_ROOT / "posthog" / "genius_landing.py"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(LANDING_MODULE.read_text(encoding="utf-8"), encoding="utf-8")
+
+    urls_path = CODE_ROOT / "posthog" / "urls.py"
+    if not urls_path.is_file():
+        return
+
+    original = urls_path.read_text(encoding="utf-8")
+    marker = 'urlpatterns.append(re_path(r"^.*", login_required(home)))'
+    if marker not in original:
+        return
+
+    landing_block = (
+        "from posthog.genius_landing import genius_landing_page, genius_landing_static\n"
+        'urlpatterns.append(re_path(r"^landing/(?P<asset>[\\w.-]+)$", genius_landing_static))\n'
+        'urlpatterns.append(re_path(r"^$", genius_landing_page))\n'
+    )
+    if "genius_landing_page" in original:
+        return
+
+    patched = original.replace(marker, landing_block + marker, 1)
+    urls_path.write_text(patched, encoding="utf-8")
+    print("genius. landing routes patched into posthog/urls.py")
+
+
 def main() -> None:
     if not ICON.exists():
         raise SystemExit(f"Missing icon: {ICON}")
@@ -164,6 +195,7 @@ def main() -> None:
             path.write_text(patched, encoding="utf-8")
             changed += 1
 
+    patch_landing_routes()
     print(f"genius. branding patched ({changed} text files, icons updated)")
 
 
