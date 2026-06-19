@@ -13,6 +13,4 @@ COPY genius-entrypoint.sh /opt/genius/genius-entrypoint.sh
 RUN chmod +x /opt/genius/genius-entrypoint.sh \
   && python3 /opt/genius/patch_branding.py
 
-USER posthog
-
 ENTRYPOINT ["/opt/genius/genius-entrypoint.sh"]
